@@ -251,7 +251,7 @@ function say(item, prefix){
   synth.cancel();
   const [, zh, en] = item;
   if (prefix) sayOne(prefix.zh && S.lang !== "en" ? prefix.zh : prefix.en, S.lang === "en" ? "en" : "zh");
-  if (S.lang === "zh" || S.lang === "both") sayOne(zh, "zh");
+  if (S.lang === "zh" || (S.lang === "both" && !prefix)) sayOne(zh, "zh");
   if (S.lang === "en" || S.lang === "both") sayOne(en, "en");
 }
 function bubble(item, extra){
@@ -321,7 +321,8 @@ $("grid").addEventListener("click", e => {
     } else {
       replay(t, "wrong");
       synth && synth.cancel();
-      sayOne(S.lang==="en" ? "Try again" : "再試試看", S.lang==="en" ? "en" : "zh");
+      if (S.lang === "both"){ sayOne("答錯了", "zh"); sayOne(item[2], "en"); }
+      else sayOne(S.lang==="en" ? "Try again" : "再試試看", S.lang==="en" ? "en" : "zh");
     }
   }
 });
