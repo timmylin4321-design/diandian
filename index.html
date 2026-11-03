@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#e8f4ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="點點說說">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>點點說說</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Noto+Sans+TC:wght@500;900&display=swap">
+<style>
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}
+body{margin:0;font-size:14px;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+*,*::before,*::after{box-sizing:border-box}
+button{touch-action:manipulation}
+[hidden]{display:none!important}
+/* Layout: sticky top bar (category chips + language) over a big-tile grid; a speech bubble shows the last word. */
+:root{
+  --bg:#e8f4ff; --surface:#ffffff; --ink:#1d2b4f; --muted:#5c6b8f;
+  --accent:#ff7a3d; --accent-ink:#ffffff; --sun:#ffd23f; --mint:#3ccf9a; --line:#cfe2f7;
+  --display:"Fredoka","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141b33; --surface:#212b4d; --ink:#f1f5ff; --muted:#a8b4d6;
+  --accent:#ff8f5a; --accent-ink:#1a1230; --sun:#ffd23f; --mint:#4fe0ad; --line:#2f3b66; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141b33; --surface:#212b4d; --ink:#f1f5ff; --muted:#a8b4d6;
+  --accent:#ff8f5a; --accent-ink:#1a1230; --sun:#ffd23f; --mint:#4fe0ad; --line:#2f3b66; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 32px;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);
+  display:flex;flex-direction:column;gap:12px;padding-block:16px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(26px,5vw,36px);letter-spacing:.02em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.seg{display:flex;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--muted);font:700 15px var(--display);
+  padding:8px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:2px solid var(--line);background:var(--surface);
+  color:var(--ink);font:700 16px var(--body);padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer}
+.cat .e{font-family:var(--emoji);font-size:22px;line-height:1}
+.cat[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.bubble{display:flex;align-items:center;gap:14px;background:var(--surface);border:2px solid var(--line);
+  border-radius:24px;padding:10px 18px;min-height:64px}
+.bubble .big{font-family:var(--emoji);font-size:44px;line-height:1}
+.bubble .zh{font:900 clamp(24px,5vw,32px) var(--body)}
+.bubble .en{font:500 clamp(18px,3.5vw,22px) var(--display);color:var(--muted)}
+.bubble .hint{color:var(--muted);font-size:16px}
+.quizbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn{border:0;background:var(--mint);color:#0d2b20;font:700 16px var(--body);padding:10px 16px;border-radius:999px;cursor:pointer}
+.btn.alt{background:var(--sun);color:#3a2a00}
+.stars{font-family:var(--emoji);font-size:22px;letter-spacing:2px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin-top:8px}
+.tile{position:relative;border:3px solid transparent;background:var(--surface);border-radius:28px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 8px 12px;
+  box-shadow:0 4px 0 var(--line);transition:transform .12s ease;color:var(--ink)}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.tile:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+.tile .e{font-family:var(--emoji);font-size:clamp(64px,14vw,84px);line-height:1.1}
+.tile .zh{font:900 20px var(--body)}
+.tile .en{font:500 15px var(--display);color:var(--muted)}
+.hide-labels .tile .zh,.hide-labels .tile .en{visibility:hidden}
+.tile.pop .e{animation:pop .5s ease}
+.tile.right{border-color:var(--mint)}
+.tile.wrong{animation:shake .4s ease}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.3) rotate(-8deg)}70%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){.tile.pop .e,.tile.wrong{animation:none}}
+.note{margin-top:20px;color:var(--muted);font-size:13px;line-height:1.6}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="top">
+    <h1>點點<span>說說</span></h1>
+    <div class="seg" role="group" aria-label="模式">
+      <button id="m-learn" aria-pressed="true">點點聽</button>
+      <button id="m-quiz" aria-pressed="false">找找看</button>
+    </div>
+    <div class="seg" role="group" aria-label="語言">
+      <button id="l-zh" aria-pressed="true">中文</button>
+      <button id="l-en" aria-pressed="false">English</button>
+      <button id="l-both" aria-pressed="false">中+英</button>
+    </div>
+  </div>
+  <nav class="cats" id="cats" aria-label="分類"></nav>
+  <div class="bubble" id="bubble" aria-live="polite"><span class="big">👆</span><span class="hint">點一下圖片，聽聽它叫什麼名字！</span></div>
+</header>
+<main class="grid" id="grid"></main>
+<p class="note">圖案使用裝置內建的 emoji 字型：在 iPhone、iPad、Mac 上會顯示 Apple emoji。聲音來自裝置的語音朗讀；沒聲音時請確認手機沒有開靜音。</p>
+</div>
+
+<script>
+const DATA = {
+  "動物":{icon:"🐶",items:[["🐶","小狗","dog"],["🐱","小貓","cat"],["🐰","兔子","rabbit"],["🐻","熊","bear"],["🐼","熊貓","panda"],["🦁","獅子","lion"],["🐯","老虎","tiger"],["🐘","大象","elephant"],["🦒","長頸鹿","giraffe"],["🐵","猴子","monkey"],["🐷","小豬","pig"],["🐮","牛","cow"],["🐔","雞","chicken"],["🐧","企鵝","penguin"],["🐸","青蛙","frog"],["🐢","烏龜","turtle"],["🐟","魚","fish"],["🦋","蝴蝶","butterfly"]]},
+  "水果":{icon:"🍎",items:[["🍎","蘋果","apple"],["🍌","香蕉","banana"],["🍇","葡萄","grapes"],["🍓","草莓","strawberry"],["🍉","西瓜","watermelon"],["🍊","橘子","orange"],["🍋","檸檬","lemon"],["🍑","桃子","peach"],["🍍","鳳梨","pineapple"],["🥝","奇異果","kiwi"],["🍒","櫻桃","cherries"],["🥭","芒果","mango"]]},
+  "蔬菜":{icon:"🥕",items:[["🥕","紅蘿蔔","carrot"],["🌽","玉米","corn"],["🥦","花椰菜","broccoli"],["🍅","番茄","tomato"],["🥔","馬鈴薯","potato"],["🍆","茄子","eggplant"],["🥒","小黃瓜","cucumber"],["🧅","洋蔥","onion"],["🍄","香菇","mushroom"],["🫑","青椒","green pepper"]]},
+  "交通":{icon:"🚗",items:[["🚗","汽車","car"],["🚌","公車","bus"],["🚓","警車","police car"],["🚑","救護車","ambulance"],["🚒","消防車","fire truck"],["🚕","計程車","taxi"],["🚲","腳踏車","bicycle"],["🏍️","摩托車","motorcycle"],["🚂","火車","train"],["✈️","飛機","airplane"],["🚁","直升機","helicopter"],["🚀","火箭","rocket"],["⛵","帆船","sailboat"],["🚜","拖拉機","tractor"]]},
+  "食物":{icon:"🍦",items:[["🍞","麵包","bread"],["🍚","白飯","rice"],["🍜","麵","noodles"],["🥚","雞蛋","egg"],["🥛","牛奶","milk"],["🧀","起司","cheese"],["🍪","餅乾","cookie"],["🍰","蛋糕","cake"],["🍦","冰淇淋","ice cream"],["🍕","披薩","pizza"],["🍩","甜甜圈","donut"],["🥟","水餃","dumpling"]]},
+  "大自然":{icon:"🌈",items:[["☀️","太陽","sun"],["🌙","月亮","moon"],["⭐","星星","star"],["☁️","雲","cloud"],["🌧️","下雨","rain"],["🌈","彩虹","rainbow"],["❄️","雪花","snowflake"],["🌸","花","flower"],["🌳","樹","tree"],["🍁","葉子","leaf"],["🌊","海浪","wave"],["⛰️","山","mountain"]]},
+  "身體":{icon:"👀",items:[["👀","眼睛","eyes"],["👂","耳朵","ear"],["👃","鼻子","nose"],["👄","嘴巴","mouth"],["🦷","牙齒","tooth"],["✋","手","hand"],["🦶","腳","foot"],["💪","手臂","arm"]]}
+};
+
+const S = {cat:"動物", lang:"zh", mode:"learn", target:null, score:0};
+const $ = id => document.getElementById(id);
+const synth = window.speechSynthesis;
+let voices = [];
+function loadVoices(){ voices = synth ? synth.getVoices() : []; }
+if (synth){ loadVoices(); synth.onvoiceschanged = loadVoices; }
+function pickVoice(lang){
+  const pref = lang === "zh" ? ["zh-TW","zh-HK","zh-CN","zh"] : ["en-US","en-GB","en"];
+  for (const p of pref){ const v = voices.find(v => v.lang.replace("_","-").startsWith(p)); if (v) return v; }
+  return null;
+}
+function sayOne(text, lang){
+  if (!synth) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang === "zh" ? "zh-TW" : "en-US";
+  const v = pickVoice(lang); if (v) u.voice = v;
+  u.rate = 0.85; u.pitch = 1.15;
+  synth.speak(u);
+}
+function say(item, prefix){
+  if (!synth) return;
+  synth.cancel();
+  const [, zh, en] = item;
+  if (prefix) sayOne(prefix.zh && S.lang !== "en" ? prefix.zh : prefix.en, S.lang === "en" ? "en" : "zh");
+  if (S.lang === "zh" || S.lang === "both") sayOne(zh, "zh");
+  if (S.lang === "en" || S.lang === "both") sayOne(en, "en");
+}
+function bubble(item, extra){
+  const b = $("bubble");
+  if (!item){ b.innerHTML = extra; return; }
+  const showZh = S.lang !== "en", showEn = S.lang !== "zh";
+  b.innerHTML = `<span class="big">${item[0]}</span>` +
+    (showZh ? `<span class="zh">${item[1]}</span>` : "") +
+    (showEn ? `<span class="en">${item[2]}</span>` : "") + (extra || "");
+}
+
+function renderCats(){
+  $("cats").innerHTML = Object.entries(DATA).map(([k,v]) =>
+    `<button class="cat" aria-pressed="${k===S.cat}" data-k="${k}"><span class="e">${v.icon}</span>${k}</button>`).join("");
+}
+function renderGrid(){
+  const g = $("grid");
+  g.classList.toggle("hide-labels", S.mode === "quiz");
+  g.innerHTML = DATA[S.cat].items.map((it,i) =>
+    `<button class="tile" data-i="${i}" aria-label="${it[1]} ${it[2]}"><span class="e">${it[0]}</span><span class="zh">${S.lang==="en"?"":it[1]}</span><span class="en">${S.lang==="zh"?"":it[2]}</span></button>`).join("");
+}
+function stars(){ return "⭐".repeat(Math.min(S.score,10)) + (S.score>10 ? ` ×${S.score}` : ""); }
+function newQuestion(){
+  const items = DATA[S.cat].items;
+  let t; do { t = Math.floor(Math.random()*items.length); } while (items.length>1 && t===S.target);
+  S.target = t;
+  const it = items[t];
+  $("bubble").innerHTML = `<div class="quizbar"><span class="big">❓</span><button class="btn" id="again">🔊 再聽一次</button><button class="btn alt" id="next">換一題</button><span class="stars">${stars()}</span></div>`;
+  $("again").onclick = () => say(it, {zh:"找找看", en:"Find the"});
+  $("next").onclick = newQuestion;
+  say(it, {zh:"找找看", en:"Find the"});
+}
+function setMode(m){
+  S.mode = m; S.target = null;
+  $("m-learn").setAttribute("aria-pressed", m==="learn");
+  $("m-quiz").setAttribute("aria-pressed", m==="quiz");
+  renderGrid();
+  if (m === "quiz") newQuestion();
+  else bubble(null, `<span class="big">👆</span><span class="hint">點一下圖片，聽聽它叫什麼名字！</span>`);
+}
+function setLang(l){
+  S.lang = l;
+  ["zh","en","both"].forEach(x => $("l-"+x).setAttribute("aria-pressed", x===l));
+  renderGrid();
+  if (S.mode === "quiz") newQuestion();
+}
+function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+$("cats").addEventListener("click", e => {
+  const b = e.target.closest(".cat"); if (!b) return;
+  S.cat = b.dataset.k; renderCats(); setMode(S.mode);
+});
+$("grid").addEventListener("click", e => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  const i = +t.dataset.i, item = DATA[S.cat].items[i];
+  if (S.mode === "learn"){
+    replay(t, "pop"); say(item); bubble(item);
+  } else {
+    if (i === S.target){
+      S.score++; replay(t, "pop"); t.classList.add("right");
+      synth && synth.cancel();
+      sayOne(S.lang==="en" ? "Great job!" : "答對了！好棒！", S.lang==="en" ? "en" : "zh");
+      if (S.lang !== "en") sayOne(item[1], "zh");
+      if (S.lang !== "zh") sayOne(item[2], "en");
+      bubble(item, `<span class="stars">${stars()}</span>`);
+      setTimeout(() => { t.classList.remove("right"); newQuestion(); }, 2600);
+    } else {
+      replay(t, "wrong");
+      synth && synth.cancel();
+      sayOne(S.lang==="en" ? "Try again" : "再試試看", S.lang==="en" ? "en" : "zh");
+    }
+  }
+});
+$("m-learn").onclick = () => setMode("learn");
+$("m-quiz").onclick = () => setMode("quiz");
+$("l-zh").onclick = () => setLang("zh");
+$("l-en").onclick = () => setLang("en");
+$("l-both").onclick = () => setLang("both");
+
+renderCats(); renderGrid();
+if (!synth) bubble(null, `<span class="hint">這個瀏覽器不支援語音朗讀，請改用 Safari 或 Chrome。</span>`);
+</script>
+
+<script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+</body>
+</html>
