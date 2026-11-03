@@ -314,7 +314,7 @@ $("grid").addEventListener("click", e => {
       S.score++; replay(t, "pop"); t.classList.add("right");
       synth && synth.cancel();
       sayOne(S.lang==="en" ? "Great job!" : "答對了！好棒！", S.lang==="en" ? "en" : "zh");
-      if (S.lang !== "en") sayOne(item[1], "zh");
+      if (S.lang === "zh") sayOne(item[1], "zh");
       if (S.lang !== "zh") sayOne(item[2], "en");
       bubble(item, `<span class="stars">${stars()}</span>`);
       setTimeout(() => { t.classList.remove("right"); newQuestion(); }, 2600);
