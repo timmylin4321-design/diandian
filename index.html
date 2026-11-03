@@ -87,6 +87,14 @@ h1 span{color:var(--accent)}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){.tile.pop .e,.tile.wrong{animation:none}}
 .note{margin-top:20px;color:var(--muted);font-size:13px;line-height:1.6}
+.tile{padding:8px 8px 12px}
+.tile .ph{width:100%;aspect-ratio:1;object-fit:cover;border-radius:20px;background:var(--line);display:block}
+.tile.pop .ph{animation:pop .5s ease}
+.bubble .bp{width:60px;height:60px;border-radius:16px;object-fit:cover;flex:0 0 auto}
+.credits summary{cursor:pointer;font-weight:700}
+.credits ol{padding-left:20px;margin:8px 0 0;font-size:12px;line-height:1.7;word-break:break-word}
+.credits a{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.tile.pop .ph{animation:none}}
 </style>
 
 </head>
@@ -109,7 +117,8 @@ h1 span{color:var(--accent)}
   <div class="bubble" id="bubble" aria-live="polite"><span class="big">👆</span><span class="hint">點一下圖片，聽聽它叫什麼名字！</span></div>
 </header>
 <main class="grid" id="grid"></main>
-<p class="note">圖案使用裝置內建的 emoji 字型：在 iPhone、iPad、Mac 上會顯示 Apple emoji。聲音來自裝置的語音朗讀；沒聲音時請確認手機沒有開靜音。</p>
+<p class="note">照片來自 Wikimedia Commons，依各自的創用 CC 或公眾領域授權使用。聲音來自裝置的語音朗讀；沒聲音時請確認手機沒有開靜音。</p>
+<details class="note credits"><summary>圖片來源與授權</summary><ol id="credits"></ol></details>
 </div>
 
 <script>
@@ -122,6 +131,101 @@ const DATA = {
   "大自然":{icon:"🌈",items:[["☀️","太陽","sun"],["🌙","月亮","moon"],["⭐","星星","star"],["☁️","雲","cloud"],["🌧️","下雨","rain"],["🌈","彩虹","rainbow"],["❄️","雪花","snowflake"],["🌸","花","flower"],["🌳","樹","tree"],["🍁","葉子","leaf"],["🌊","海浪","wave"],["⛰️","山","mountain"]]},
   "身體":{icon:"👀",items:[["👀","眼睛","eyes"],["👂","耳朵","ear"],["👃","鼻子","nose"],["👄","嘴巴","mouth"],["🦷","牙齒","tooth"],["✋","手","hand"],["🦶","腳","foot"],["💪","手臂","arm"]]}
 };
+
+const PHOTO_SRC = `
+dog|t:7/7a/Huskiesatrest.jpg|CC BY 2.0|M. Rehemtulla
+cat|t:2/25/Siam_lilacpoint.jpg|CC BY-SA 3.0|Karin Langner-Bahmann
+rabbit|t:1/1f/Oryctolagus_cuniculus_Rcdo.jpg|CC BY 3.0|JM Ligero Loarte
+bear|t:7/71/2010-kodiak-bear-1.jpg|CC BY-SA 3.0|Yathin S Krishnappa
+panda|t:0/0f/Grosser_Panda.JPG|CC BY-SA 3.0|J. Patrick Fischer
+lion|t:a/a6/020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg|CC BY-SA 4.0|Giles Laurent
+tiger|t:b/b0/Bengal_tiger_%28Panthera_tigris_tigris%29_female_3_crop.jpg|CC BY-SA 4.0|Charles J. Sharp
+elephant|t:3/37/African_Bush_Elephant.jpg|GFDL 1.2|Muhammad Mahdi Karim
+giraffe|t:9/9e/Giraffe_Mikumi_National_Park.jpg|GFDL 1.2|Muhammad Mahdi Karim
+monkey|t:4/4e/Ubud_Monkey_Family.jpg|CC BY-SA 4.0|Deerpeter
+pig|t:3/3e/Pig_farm_Vampula_1.jpg|CC BY-SA 4.0|kallerna
+cow|t:8/8c/Cow_%28Fleckvieh_breed%29_Oeschinensee_Slaunger_2009-07-07.jpg|CC BY-SA 3.0|Kim Hansen
+chicken|t:8/84/Male_and_female_chicken_sitting_together.jpg|CC BY-SA 2.0|Andrei Niemimäki
+penguin|t:a/a3/Aptenodytes_forsteri_-Snow_Hill_Island%2C_Antarctica_-adults_and_juvenile-8.jpg|CC BY 2.0|Ian Duffy
+frog|t:f/f5/Red-eyed_Leaf_Frog_%2849661076226%29.jpg|CC BY 2.0|Charlie Jackson
+turtle|t:9/9f/Penang_-_red-eared_slider_basking_at_Burmese_Temple_-_May_2024.jpg|CC BY-SA 4.0|Dominic Nelson
+fish|t:6/65/Gold_fish1.jpg|CC BY-SA 3.0|לינה אבוגוש
+butterfly|t:3/3d/Fesoj_-_Papilio_machaon_%28by%29.jpg|CC BY 2.0|fesoj
+apple|t:a/a6/Pink_lady_and_cross_section.jpg|GFDL 1.2|Fir0002
+banana|o:d/de/Bananavarieties.jpg|CC BY-SA 3.0|TimothyPilgrim
+grapes|t:5/53/Grapes%2C_Rostov-on-Don%2C_Russia.jpg|CC BY 4.0|Vyacheslav Argenberg
+strawberry|t:4/4c/Garden_strawberry_%28Fragaria_%C3%97_ananassa%29_single2.jpg|CC BY-SA 4.0|Ivar Leidus
+watermelon|t:4/47/Taiwan_2009_Tainan_City_Organic_Farm_Watermelon_FRD_7962.jpg|CC BY-SA 3.0|Fred Hsu
+orange|t:e/e3/Oranges_-_whole-halved-segment.jpg|CC BY-SA 4.0|Ivar Leidus
+lemon|t:e/e4/P1030323.JPG|CC BY-SA 4.0|Elena Chochkova
+peach|t:d/dd/Liat_Portal_for_Foodie_Disorder_-_Donut_Peach.jpg|CC BY-SA 4.0|HaJunkiyada
+pineapple|t:7/74/%E0%B4%95%E0%B5%88%E0%B4%A4%E0%B4%9A%E0%B5%8D%E0%B4%9A%E0%B4%95%E0%B5%8D%E0%B4%95.jpg|CC BY 3.0|Suniltg
+kiwi|t:0/09/Actinidia_arguta_fruit_-_hardy_kiwi_-_Kiwibeere_05.jpg|CC BY 3.0|Rillke
+cherries|t:f/f6/Cherry_season_%2848216568227%29.jpg|CC BY 2.0|spurekar
+mango|t:7/74/Mangos_-_single_and_halved.jpg|CC BY-SA 4.0|Ivar Leidus
+carrot|t:a/a2/Vegetable-Carrot-Bundle-wStalks.jpg|Public domain|Evan-Amos
+corn|t:d/db/Corn_with_white_and_yellow_kernels.jpg|CC BY-SA 4.0|Jud McCranie
+broccoli|t:0/03/Broccoli_and_cross_section_edit.jpg|GFDL 1.2|Fir0002
+tomato|t:8/89/Tomato_je.jpg|CC BY-SA 3.0|Softeis
+potato|t:a/ab/Patates.jpg|Public domain|Scott Bauer, USDA ARS
+eggplant|t:7/76/Solanum_melongena_24_08_2012_%281%29.JPG|CC BY-SA 3.0|Joydeep
+cucumber|t:9/96/ARS_cucumber.jpg|Public domain|Stephen Ausmus, USDA ARS
+onion|t:a/a2/Mixed_onions.jpg|CC BY-SA 3.0|Colin
+mushroom|t:6/64/Shiitakegrowing.jpg|CC BY 2.0|frankenstoen
+green pepper|t:8/85/Green-Yellow-Red-Pepper-2009.jpg|CC BY-SA 3.0|Kham Tran
+car|t:b/b8/2020_Toyota_Corolla_Hybrid_front_NYIAS_2019.jpg|CC BY-SA 4.0|Kevauto
+bus|t:8/84/LTZ1328-19-20241030-160332.jpg|CC BY-SA 4.0|SIA321
+police car|t:e/ed/Washington_DC_Metropolitan_Police_Department_Dodge_Charger_No._1605.jpg|CC BY 2.0|Raymond Wambsgans
+ambulance|t:c/cd/Stockholm%2C_ambulans%2C_2014%2C_21.jpg|CC BY-SA 4.0|AleWi
+fire truck|t:d/d0/Dublin_Fire_Brigade_Pump_Ladder_D32.jpg|CC BY-SA 2.0|William Murphy
+taxi|t:0/03/TAXI.jpg|CC BY-SA 4.0|Petar Milošević
+bicycle|t:4/41/Left_side_of_Flying_Pigeon.jpg|CC BY 2.0|齐健
+motorcycle|t:5/50/Istockphoto-114285168-612x612.jpg|CC BY-SA 4.0|Devanand.j
+train|t:5/50/%D0%9F%D0%BE%D0%B5%D0%B7%D0%B4_%D0%BD%D0%B0_%D1%84%D0%BE%D0%BD%D0%B5_%D0%B3%D0%BE%D1%80%D1%8B_%D0%A8%D0%B0%D1%82%D1%80%D0%B8%D1%89%D0%B5._%D0%92%D0%BE%D1%80%D0%BE%D0%BD%D0%B5%D0%B6%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C.jpg|CC BY-SA 4.0|Алексей Задонский
+airplane|t:3/36/United_Airlines_Boeing_777-200_Meulemans.jpg|GFDL|Jules Meulemans
+helicopter|t:7/70/VH-SUF_Taking_Off.jpg|CC BY 4.0|Fly45yt
+rocket|t:9/9a/Soyuz_TMA-9_launch.jpg|Public domain|Bill Ingalls
+sailboat|t:1/1b/Sailing_yacht_in_the_sea_%2852847829009%29.jpg|CC BY 2.0|Jernej Furman
+tractor|t:8/85/Ford_8N.jpg|CC BY 2.0|Mulad
+bread|t:c/c7/Korb_mit_Br%C3%B6tchen.JPG|CC BY-SA 3.0|3268zauber
+rice|t:d/d6/Meshi_001.jpg|CC0|Ocdp
+noodles|t:4/48/Nongshim_Yukejang_Bowl_Noodle_Soup_20201111_003.jpg|CC BY-SA 4.0|Mobius6
+egg|t:3/3f/Huevo_frito.jpg|CC BY-SA 4.0|Horacio Cambeiro
+milk|t:a/a5/Glass_of_Milk_%2833657535532%29.jpg|CC BY 2.0|NIAID
+cheese|t:a/a8/Cheese_platter.jpg|CC BY-SA 3.0|
+cookie|t:f/f1/2ChocolateChipCookies.jpg|GFDL 1.2|Jonathunder
+cake|t:0/04/Pound_layer_cake.jpg|Public domain|Scheinwerfermann
+ice cream|o:f/f3/Vanilla_Ice_Cream_Cone_at_Camp_Manitoulin.jpg|CC BY 2.0|Steven Depolo
+pizza|t:9/91/Pizza-3007395.jpg|CC0|igorovsyannykov
+donut|t:a/a5/Glazed-Donut.jpg|Public domain|Evan-Amos
+dumpling|t:8/88/%E5%8F%B0%E7%81%A3%E5%8D%97%E6%8A%95%E8%8D%89%E5%B1%AF%E6%B0%B4%E9%A4%83Nantou%2C_Taiwan_Caotun_dumplings.jpg|CC BY-SA 4.0|Yeepunchmen
+sun|t:2/2e/Crepuscular_Rays_Reno_Nevada_USA.jpg|CC BY-SA 4.0|ExorcisioTe
+moon|t:e/e1/FullMoon2010.jpg|CC BY-SA 3.0|Gregory H. Revera
+star|t:8/8f/Milky_Way_and_starry_night_sky_%2826972689115%29.jpg|Public domain|NPS/Jacob W. Frank
+cloud|t:4/4b/White_Cumulus_Clouds_against_Blue_Sky_%284%29.jpg|CC BY-SA 4.0|Lance Vanlewen
+rain|t:0/0a/Big_raindrops_on_car_window.jpg|CC BY 4.0|The Eloquent Peasant
+rainbow|t:5/5c/Double-alaskan-rainbow.jpg|CC BY-SA 2.5|Eric Rolph
+snowflake|t:e/e1/Snowflake_%28lumehelves%29.jpg|CC BY 4.0|Janek Lass
+flower|t:3/38/Magnolia_grandiflora_-_flower_1.jpg|CC BY-SA 3.0|Ianaré Sévi
+tree|t:7/7f/Usamljeni_jasen_-_panoramio_%28cropped%29.jpg|CC BY-SA 3.0|menergo
+leaf|t:c/c7/Lisc_lipy.jpg|CC BY-SA 3.0|Krzysztof P. Jasiutowicz
+wave|t:0/04/Porto_Covo_Outubro_2014-3.jpg|CC BY-SA 4.0|Alvesgaspar
+mountain|t:e/e7/Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg|CC BY-SA 2.5|Luca Galuzzi
+eyes|t:8/8f/Human_eye_with_blood_vessels.jpg|CC BY-SA 3.0|ROTFLOLEB
+ear|t:e/ed/Human_right_ear_%28cropped%29.jpg|CC BY-SA 4.0|Tomas Gunnarsson / Wikimedia Sverige
+nose|o:d/d8/Fort_Ross_Elena_wearing_Traditional_Russian_Costume_%28cropped%29.jpg|CC BY-SA 2.0|Franco Folini
+mouth|t:f/f5/Lips_2023.jpg|CC BY-SA 4.0|PumpkinMan1943
+tooth|t:d/db/06-10-06smile.jpg|CC BY-SA 3.0|dozenist
+hand|t:a/a3/Hand%2C_fingers_-_back.jpg|CC BY-SA 4.0|Tomas Gunnarsson / Wikimedia Sverige
+foot|t:5/56/Foot_on_white_background.jpg|CC BY-SA 4.0|Tomas Gunnarsson / Wikimedia Sverige
+arm|t:6/6d/Extended_arm.jpg|CC BY-SA 4.0|Tomas Gunnarsson / Wikimedia Sverige
+`;
+const PHOTO = {};
+PHOTO_SRC.trim().split("\n").forEach(l => {
+  const [k, p, lic, by] = l.split("|");
+  const path = p.slice(2), f = path.split("/")[2];
+  PHOTO[k] = ["https://upload.wikimedia.org/wikipedia/commons/" + (p[0] === "t" ? "thumb/" + path + "/500px-" + f : path), "https://commons.wikimedia.org/wiki/File:" + f, lic, by];
+});
 
 const S = {cat:"動物", lang:"zh", mode:"learn", target:null, score:0};
 const $ = id => document.getElementById(id);
@@ -154,7 +258,7 @@ function bubble(item, extra){
   const b = $("bubble");
   if (!item){ b.innerHTML = extra; return; }
   const showZh = S.lang !== "en", showEn = S.lang !== "zh";
-  b.innerHTML = `<span class="big">${item[0]}</span>` +
+  b.innerHTML = `<img class="bp" src="${PHOTO[item[2]][0]}" alt="">` +
     (showZh ? `<span class="zh">${item[1]}</span>` : "") +
     (showEn ? `<span class="en">${item[2]}</span>` : "") + (extra || "");
 }
@@ -167,7 +271,7 @@ function renderGrid(){
   const g = $("grid");
   g.classList.toggle("hide-labels", S.mode === "quiz");
   g.innerHTML = DATA[S.cat].items.map((it,i) =>
-    `<button class="tile" data-i="${i}" aria-label="${it[1]} ${it[2]}"><span class="e">${it[0]}</span><span class="zh">${S.lang==="en"?"":it[1]}</span><span class="en">${S.lang==="zh"?"":it[2]}</span></button>`).join("");
+    `<button class="tile" data-i="${i}" aria-label="${it[1]} ${it[2]}"><img class="ph" src="${PHOTO[it[2]][0]}" alt="" loading="lazy"><span class="zh">${S.lang==="en"?"":it[1]}</span><span class="en">${S.lang==="zh"?"":it[2]}</span></button>`).join("");
 }
 function stars(){ return "⭐".repeat(Math.min(S.score,10)) + (S.score>10 ? ` ×${S.score}` : ""); }
 function newQuestion(){
@@ -228,6 +332,8 @@ $("l-en").onclick = () => setLang("en");
 $("l-both").onclick = () => setLang("both");
 
 renderCats(); renderGrid();
+$("credits").innerHTML = Object.values(DATA).flatMap(c => c.items).map(it => { const p = PHOTO[it[2]]; return `<li>${it[1]}：<a href="${p[1]}" target="_blank" rel="noopener">${p[3] || "Wikimedia Commons"}</a>，${p[2]}</li>`; }).join("");
+if ("caches" in window) caches.open("diandian-photos").then(c => Object.values(PHOTO).forEach(p => c.match(p[0]).then(hit => hit || fetch(p[0], {mode:"no-cors"}).then(r => c.put(p[0], r))).catch(() => {})));
 if (!synth) bubble(null, `<span class="hint">這個瀏覽器不支援語音朗讀，請改用 Safari 或 Chrome。</span>`);
 </script>
 
